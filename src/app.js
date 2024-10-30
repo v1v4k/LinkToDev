@@ -9,26 +9,30 @@ const {adminAuth, userAuth} = require("./middlewares/auth")
 app.use("/admin", adminAuth)
 
 app.get("/admin/getData", (req, res)=>{
-    console.log("Access to data");
-    res.send("All data successfully")
+
+//error handling using try catch
+     try{
+        throw new Error("Just Practice"); 
+        console.log("Access to data");
+        res.send("All data sent successfully")
+        
+    }
+     catch(err){
+        console.log(err);
+        res.status(500).send(`${err}-Something went wrong contact vivek for support`)
+    } 
+   
 })
 
-app.post("/admin/deleteUser", (req, res)=>{
-    console.log("user is deleted");
-    res.send("Deleted a user")
-})
+// wildcard error handling (new way but follow try catch)
 
-//no authorization for login api it should be open
-app.post("/user/login",(req,res)=>{
-    res.send("User logged in successfully");
-})
+/* app.use("/",(err, req, res, next)=>{
+    if(err){
+        //loggging error
+        res.status(500).send("Something went wrong @vivek");
+    }
+}) */
 
-//middleware for user authorization
-app.use("/user", userAuth)
-
-app.get("/user", (req, res)=>{
-    res.send("user data sent successfully")
-})
 
 const port = 4444;
 
