@@ -2,31 +2,37 @@ const express = require("express")
 
 const app = express();
 
-app.get("/user",(req,res,next)=>{
-    console.log("Handling route 1");
-    //res.send("Route Handler 1")
-    next();
-    console.log("Handling route 1");
+const {adminAuth, userAuth} = require("./middlewares/auth")
+
+
+//middleware for admin authorization
+app.use("/admin", adminAuth)
+
+app.get("/admin/getData", (req, res)=>{
+    console.log("Access to data");
+    res.send("All data successfully")
 })
 
-app.get("/user",(req, res, next)=>{
-    console.log("Handling route 2");
-   // res.send("Route Handler 2 ")
-    next();
-    
+app.post("/admin/deleteUser", (req, res)=>{
+    console.log("user is deleted");
+    res.send("Deleted a user")
 })
 
-app.get("/user", (req, res, next)=>{
-    console.log("Handling route 3");
-    res.send("Route Handler 3 ")
-    next();
-    console.log("Handling route 3");
-    
+//no authorization for login api it should be open
+app.post("/user/login",(req,res)=>{
+    res.send("User logged in successfully");
 })
 
+//middleware for user authorization
+app.use("/user", userAuth)
+
+app.get("/user", (req, res)=>{
+    res.send("user data sent successfully")
+})
 
 const port = 4444;
 
 app.listen(port,()=>{
     console.log("server is up and running at port 4444")
-})
+}
+)
