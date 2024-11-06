@@ -16,7 +16,7 @@ const userSchema = mongoose.Schema({
     emailId : {
         type: String
     },
-    passeord : {
+    password : {
         type : String
     }
 });
