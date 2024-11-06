@@ -1,42 +1,40 @@
+require('dotenv').config();
+
 const express = require("express")
+const connectDB =  require("./config/database");
+const UserModel = require('./models/user');
 
 const app = express();
-
-const {adminAuth, userAuth} = require("./middlewares/auth")
-
-
-//middleware for admin authorization
-app.use("/admin", adminAuth)
-
-app.get("/admin/getData", (req, res)=>{
-
-//error handling using try catch
-     try{
-        throw new Error("Just Practice"); 
-        console.log("Access to data");
-        res.send("All data sent successfully")
-        
-    }
-     catch(err){
-        console.log(err);
-        res.status(500).send(`${err}-Something went wrong contact vivek for support`)
-    } 
-   
-})
-
-// wildcard error handling (new way but follow try catch)
-
-/* app.use("/",(err, req, res, next)=>{
-    if(err){
-        //loggging error
-        res.status(500).send("Something went wrong @vivek");
-    }
-}) */
-
-
 const port = 4444;
 
-app.listen(port,()=>{
-    console.log("server is up and running at port 4444")
-}
-)
+app.post("/signup", async (req, res)=>{
+    const user = new UserModel({
+        firstName : "Hari",
+        lastName : "Patlolla",
+        gender : "Male",
+        age : 23
+    })
+    try{
+        throw new Error("Just Practice"); 
+        await user.save();
+        res.send("Signed Up Successfully");
+      
+    }
+    catch(err){
+        console.error("there is some issue while saving the user");
+        res.status(400).send("there is some issue while saving the user")
+    }
+
+    
+})
+
+connectDB()
+.then(()=>{
+    console.log("Database connection successfully established");
+    app.listen(port,()=>{
+        console.log("server is up and running at port 4444")
+    })
+})
+.catch((err)=>{
+    console.error(`Database cannot be connected+${err}`)
+})
