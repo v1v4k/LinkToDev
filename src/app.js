@@ -7,15 +7,12 @@ const UserModel = require('./models/user');
 const app = express();
 const port = 4444;
 
+app.use(express.json());
+
 app.post("/signup", async (req, res)=>{
-    const user = new UserModel({
-        firstName : "Hari",
-        lastName : "Patlolla",
-        gender : "Male",
-        age : 23
-    })
+    const user = new UserModel(req.body);
     try{
-        throw new Error("Just Practice"); 
+        // throw new Error("Just Practice"); 
         await user.save();
         res.send("Signed Up Successfully");
       
