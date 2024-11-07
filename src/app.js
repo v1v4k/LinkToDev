@@ -108,7 +108,11 @@ app.patch("/user", async(req, res)=>{
     const userId = req.body.userId;
     const data = req.body;
     try{
-        const user = await UserModel.findOneAndUpdate({_id: userId}, data,{returnDocument: 'after'});
+        const user = await UserModel.findOneAndUpdate({_id: userId}, data,
+            {returnDocument: 'after',
+                runValidators : true
+                
+            });
         if(!user){
             res.status(404).send("ERROR NOT FOUND");
 
@@ -133,8 +137,7 @@ app.post("/signup", async (req, res)=>{
       
     }
     catch(err){
-        console.error("there is some issue while saving the user");
-        res.status(400).send("there is some issue while saving the user")
+        res.status(400).send(`there is some issue while saving the user + ${err.message}`)
     }
 
     
