@@ -104,12 +104,32 @@ app.delete("/user", async (req, res)=>{
 })
 
 // patch api to update a user
-app.patch("/user", async(req, res)=>{
-    const userId = req.body.userId;
+app.patch("/user/:userId", async(req, res)=>{
+    const userId = req.params.userId;
     const data = req.body;
+
     try{
+        const allowedUpdates = [
+            "photoUrl",
+            "gender",
+            "about",
+            "photoUrl",
+            "skills",
+            "age"
+        ]
+    
+        const isUpdateAllowed = Object.keys(data).every((k)=>allowedUpdates.includes(k))
+    
+        if(!isUpdateAllowed){
+            throw new Error("Update Not Allowed")
+        }
+
+        if(data.skills.length > 10){
+            throw new Error("You got too many skills Just mention 10 skills please")
+        }
         const user = await UserModel.findOneAndUpdate({_id: userId}, data,
-            {returnDocument: 'after',
+            {
+                returnDocument: 'after',
                 runValidators : true
                 
             });
@@ -131,13 +151,23 @@ app.patch("/user", async(req, res)=>{
 app.post("/signup", async (req, res)=>{
     const user = new UserModel(req.body);
     try{
+        const requiredData = ["emailId", "password", "firstName", "lastName"];
+
+        const isrequiredData = requiredData.every((key)=>Object.keys(req.body).includes(key));
+
+        if(!isrequiredData){
+            throw new Error("Missing any of must required fields")
+
+        }
+
+        //console.log(isrequiredData)
         // throw new Error("Just Practice"); 
         await user.save();
         res.send("Signed Up Successfully");
       
     }
     catch(err){
-        res.status(400).send(`there is some issue while saving the user + ${err.message}`)
+        res.status(400).send(`there is some issue while signing up the user ${err.message}`)
     }
 
     
