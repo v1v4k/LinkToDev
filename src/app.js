@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require("express")
 const connectDB =  require("./config/database");
 const UserModel = require('./models/user');
+const { validateSignUpData } = require('./helper/validation');
+const bcrypt = require("bcrypt");
 
 const app = express();
 const port = 4444;
@@ -149,25 +151,26 @@ app.patch("/user/:userId", async(req, res)=>{
 
 // signup api
 app.post("/signup", async (req, res)=>{
-    const user = new UserModel(req.body);
+
+    const {password, ...otherData } = req.body;
+
     try{
-        const requiredData = ["emailId", "password", "firstName", "lastName"];
+        // validation of data
+        validateSignUpData(req);
 
-        const isrequiredData = requiredData.every((key)=>Object.keys(req.body).includes(key));
+        // password encryption using bcrypt
 
-        if(!isrequiredData){
-            throw new Error("Missing any of must required fields")
+        const passwordHash = await bcrypt.hash(password, 10);
+        
+        // instance of the user model
+        const user = new UserModel({...otherData, password : passwordHash});
 
-        }
-
-        //console.log(isrequiredData)
-        // throw new Error("Just Practice"); 
         await user.save();
         res.send("Signed Up Successfully");
       
     }
     catch(err){
-        res.status(400).send(`there is some issue while signing up the user ${err.message}`)
+        res.status(400).send(`ERROR : ${err.message}`)
     }
 
     
