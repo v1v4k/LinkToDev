@@ -7,6 +7,7 @@ const { validateSignUpData } = require('./helper/validation');
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser")
 const jwtToken = require("jsonwebtoken");
+const { userAuth } = require('./middlewares/auth');
 
 const app = express();
 const port = 4444;
@@ -15,144 +16,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 
-// api to get sample user 
-app.get("/user", async (req, res)=>{
-    try{
-        const user = await UserModel.find(req.body)
-        if(user.length===0){
-            res.status(404).send("USER NOT FOUND")
-        }
-        else{
-            res.send(user)
-        }
-    }
-    catch(err){
-        res.status(400).send(`there is some issue while fetching the user + ${err.message}`)
 
-    }
-})
-
-// api to get user by emailId
-app.get("/userByEmail", async(req, res)=>{
-    const userEmail = req.body.emailId ;
-    try{
-
-        const user = await UserModel.findOne({emailId : userEmail});
-        if(user){
-            res.send(user)
-        }
-        else{
-            res.status(404).send("USER NOT FOUND")
-        }
-        
-
-    }
-    catch(error){
-        res.status(400).send(`there is some issue while fetching the user + ${error.message}`)
-
-    }
-})
-
-// feed api to get all users data
-app.get("/feed", async (req, res)=>{
-    try{
-        const users = await UserModel.find(req.body);
-        if(users.length===0){
-            res.status(404).send("USER NOT FOUND")
-        }
-        else{
-            res.send(users)
-        }
-    }
-    catch(err){
-        res.status(400).send(`there is some issue while fetching the user + ${err.message}`)
-    }
-    
-})
-
-//user by id
-app.get("/userById", async(req, res)=>{
-    const userId = req.body.userId;
-    try{
-
-        const user = await UserModel.findById(userId).exec();
-        if(!user){
-            res.status(404).send("USER NOT FOUND");
-        }
-        else{
-            res.send(user)
-        }
-
-    }
-    catch(error){
-        res.status(400).send(`there is some issue while fetching the user + ${err.message}`)
-
-    }
-})
-
-// api to delete a user by id
-app.delete("/user", async (req, res)=>{
-    const userId = req.body.userId;
-    try{
-        const user = await UserModel.findByIdAndDelete(userId);
-        if(!user){
-            res.status(404).send("ERROR NOT FOUND");
-
-        }
-        else{
-            res.send(user)
-        }
-    }
-    catch(error){
-        res.status(400).send(error.message)
-    }
-})
-
-// patch api to update a user
-app.patch("/user/:userId", async(req, res)=>{
-    const userId = req.params.userId;
-    const data = req.body;
-
-    try{
-        const allowedUpdates = [
-            "photoUrl",
-            "gender",
-            "about",
-            "photoUrl",
-            "skills",
-            "age"
-        ]
-    
-        const isUpdateAllowed = Object.keys(data).every((k)=>allowedUpdates.includes(k))
-    
-        if(!isUpdateAllowed){
-            throw new Error("Update Not Allowed")
-        }
-
-        if(data.skills.length > 10){
-            throw new Error("You got too many skills Just mention 10 skills please")
-        }
-        const user = await UserModel.findOneAndUpdate({_id: userId}, data,
-            {
-                returnDocument: 'after',
-                runValidators : true
-                
-            });
-        if(!user){
-            res.status(404).send("ERROR NOT FOUND");
-
-        }
-        else{
-            res.send(user)
-        }
-        
-    }
-    catch(error){
-        res.status(400).send(error.message)
-    }
-})
-
-// signup api
+// signup API
 app.post("/signup", async (req, res)=>{
 
     const {password, ...otherData } = req.body;
@@ -179,7 +44,7 @@ app.post("/signup", async (req, res)=>{
     
 })
 
-// login api
+// login API
 app.post("/login", async (req, res)=>{
     const {emailId, password } = req.body;
 
@@ -196,10 +61,12 @@ app.post("/login", async (req, res)=>{
 
 
             // generating token
-            const token = jwtToken.sign({ id: user._id }, "vikram@123")
+            const token = jwtToken.sign({ id: user._id }, "vikram@123",{
+                expiresIn : '1h'
+            })
 
             //sending cookie to user
-            res.cookie("token", token)
+            res.cookie("token", token, {maxAge : 60 * 60 * 1000 })
             res.send("login successfull")
         }
         else{
@@ -213,36 +80,31 @@ app.post("/login", async (req, res)=>{
     
 })
 
-app.get("/profile", async (req, res)=>{
+// profile API
+app.get("/profile",userAuth, async (req, res)=>{
     try{
-        
-        const { token }=  req.cookies;
-
-        if(!token){
-            throw new Error("Invalid Token")
-        }
-
-        // verifying the token
-        const decodedToken = await jwtToken.verify(token, "vikram@123")
-
-        const {id} = decodedToken;
-        const user = await UserModel.findById(id);
-
-        // getting the logged in user
-        if(!user){
-            throw new Error("User Doesn't Exist")
-        }
+            const user = req.user;
             res.send(user);
     }
     catch(error){
         res.status(400).send(`Error: ${error.message}`)
-    }
-
-    
-    
+    }   
 
 })
 
+// sendConnectionRequest API
+
+app.post("/sendConnectionRequest",userAuth, async(req, res)=>{
+    try{
+        const user = req.user;
+        res.send(`${user.firstName} sent the connection request`);
+
+    }
+    catch(error){
+        res.status(400).send(`Error : ${error.message}`)
+    }
+    
+})
 connectDB()
 .then(()=>{
     console.log("Database connection successfully established");
