@@ -176,6 +176,33 @@ app.post("/signup", async (req, res)=>{
     
 })
 
+// login api
+app.post("/login", async (req, res)=>{
+    const {emailId, password } = req.body;
+
+    try{
+        const user = await UserModel.findOne({emailId});
+
+        if(!user){
+            throw new Error("Invalid Credentials");
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if(!isPasswordValid){
+            throw new Error("Invalid Credentials");
+        }
+        else{
+            res.send("login successfull")
+        }
+    }
+    catch(error){
+        res.status(400).send(`ERROR : ${error.message}`);
+    }
+
+    
+})
+
 connectDB()
 .then(()=>{
     console.log("Database connection successfully established");
