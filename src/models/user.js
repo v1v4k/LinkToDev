@@ -20,7 +20,7 @@ const userSchema = mongoose.Schema({
         type : Number,
         min: 18,
         max : 100,
-        required : true
+        required : false
     },
     gender : {
         type : String,
@@ -29,7 +29,7 @@ const userSchema = mongoose.Schema({
                 throw new Error(`Gender Data is not valid ${value}`);
             }
         },
-        required : true
+        required : false
     },
     emailId : {
         type: String,

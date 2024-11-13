@@ -17,11 +17,34 @@ const validateSignUpData = (req) => {
     else if(!validator.isEmail(emailId)){
         throw new Error("Invalid emailId")
     }
-    else if(!validator.isStrongPassword(password)){
+    else if(!validatePassword(password)){
         throw new Error("password too weak")
 
     }
 
 }
 
-module.exports = {validateSignUpData};
+const validateEditProfileData = (req) => {
+    
+        const allowedProfileEdits =  ["firstName", "lastName","gender", "age", "skills", "about", "photoUrl"]
+
+        const isProfileEditAllowed = Object.keys(req.body).every(key=>allowedProfileEdits.includes(key))
+
+        return isProfileEditAllowed;
+    
+}
+
+
+const validatePasswordStrong = (password) => {
+    
+    if(validator.isStrongPassword(password)){
+        return true;
+    }
+    else{
+        throw new Error("Password too weak");
+    }
+
+    
+    
+}
+module.exports = {validateSignUpData, validateEditProfileData, validatePasswordStrong};
