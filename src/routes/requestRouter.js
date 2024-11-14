@@ -12,6 +12,7 @@ requestRouter.post("/sendConnectionRequest/:status/:toUserId",userAuth, async(re
         const fromUserId = user._id;
         const toUserId = req.params.toUserId;
         const status = req.params.status;
+  
 
         const statusAllowed = ["interested","ignored"];
 
