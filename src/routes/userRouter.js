@@ -38,10 +38,16 @@ const connectionRequests = await ConnectionReqModel.find({
     {fromUserId: loggedInUserId}],
     status : "accepted"
 }).populate("fromUserId", ["firstName", "lastName"])
+.populate("toUserId", "firstName lastName");
 
-
-const data = connectionRequests.map(row=>
-     row.fromUserId)       
+const data = connectionRequests.map(row=>{
+    if(row.fromUserId._id.toString()===loggedInUserId.toString()){
+        return row.toUserId;
+    } 
+    return row.fromUserId;
+} 
+       
+)
 
     res.json({
         message : `Your Connections`,
