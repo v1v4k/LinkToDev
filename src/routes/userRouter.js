@@ -1,0 +1,32 @@
+const express = require("express");
+const { userAuth } = require("../middlewares/auth");
+const ConnectionReqModel = require("../models/connectionRequest");
+const userRouter = express.Router();
+
+// connections requests to loggedInUser user API (receiver end)
+
+userRouter.get("/user/requests/received", userAuth, async (req, res)=>{
+    try{
+        const loggedInUser = req.user._id;
+
+        const connectionRequests = await ConnectionReqModel.find({
+            toUserId : loggedInUser,
+            status : "interested"
+        }).populate("fromUserId", "firstName lastName age gender")
+
+        if(!connectionRequests){
+            throw new Error(`No Connections Found`)
+        }
+
+        res.json({
+            message: `Data Fetched Successfully`,
+            data : connectionRequests
+        })
+    }
+    catch(error){
+        res.status(400).json({
+            message: `Error : ${error.message}`
+        })
+    }
+})
+module.exports = {userRouter};

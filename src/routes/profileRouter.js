@@ -49,7 +49,7 @@ try{
     const user = req.user;
     
     const { password : oldPasswordByUser, newPassword : newPasswordByUser} = req.body;
-    console.log(oldPasswordByUser)
+    
 
   
     const isOldPasswordValid = await user.validatePassword(oldPasswordByUser);
@@ -60,7 +60,6 @@ try{
         const passwordHash = await bcrypt.hash(newPasswordByUser, 10);
 
        
-       console.log(passwordHash)
 
         user.password = passwordHash;
 
