@@ -14,13 +14,22 @@ const connectionReqSchema = new mongoose.Schema(
         type : String,
         enum : {
             values:["ignored", "interested", "accepted", "rejected"],
-            message : `${VALUE} is incorrect status type`
+            message : `{VALUE} is incorrect status type`
         }
     }
 },
 {timestamps: true}
 )
 
-const ConnectionReqModel = new mongoose.Model("ConnectionReqModel", connectionReqSchema);
+connectionReqSchema.pre("save", function (next) {
+    const connectionRequest = this;
+    
+    if(connectionRequest.fromUserId.equals(connectionRequest.toUserId)){
+        throw new Error(`Invalid Connection request`)
+    }
+    next();
+})
+
+const ConnectionReqModel = new mongoose.model("ConnectionReqModel", connectionReqSchema);
 
 module.exports = ConnectionReqModel;
