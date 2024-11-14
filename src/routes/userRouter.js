@@ -3,8 +3,7 @@ const { userAuth } = require("../middlewares/auth");
 const ConnectionReqModel = require("../models/connectionRequest");
 const userRouter = express.Router();
 
-// connections requests to loggedInUser user API (receiver end)
-
+// connections requests recieved to loggedInUser  API (receiver end)
 userRouter.get("/user/requests/received", userAuth, async (req, res)=>{
     try{
         const loggedInUser = req.user._id;
@@ -29,4 +28,26 @@ userRouter.get("/user/requests/received", userAuth, async (req, res)=>{
         })
     }
 })
+
+// user connections API
+userRouter.get("/user/connections", userAuth, async (req, res)=>{
+const { _id : loggedInUserId} = req.user;
+
+const connectionRequests = await ConnectionReqModel.find({
+    $or:[{toUserId: loggedInUserId},
+    {fromUserId: loggedInUserId}],
+    status : "accepted"
+}).populate("fromUserId", ["firstName", "lastName"])
+
+
+const data = connectionRequests.map(row=>
+     row.fromUserId)       
+
+    res.json({
+        message : `Your Connections`,
+        data : data
+    
+    })
+})
+
 module.exports = {userRouter};
