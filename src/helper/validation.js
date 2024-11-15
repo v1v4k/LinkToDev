@@ -17,7 +17,7 @@ const validateSignUpData = (req) => {
     else if(!validator.isEmail(emailId)){
         throw new Error("Invalid emailId")
     }
-    else if(!validatePassword(password)){
+    else if(!validatePasswordStrong(password)){
         throw new Error("password too weak")
 
     }
