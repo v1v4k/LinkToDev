@@ -4,7 +4,7 @@ const ConnectionReqModel = require("../models/connectionRequest");
 const UserModel = require("../models/user");
 const userRouter = express.Router();
 
-const SHOW_USER_DATA = ["firstName", "lastName", "age", "gender"]
+const SHOW_USER_DATA = ["firstName", "lastName", "age", "gender", "photoUrl", "about", "skills"]
 
 // connections requests recieved to loggedInUser  API (receiver end)
 userRouter.get("/user/requests/received", userAuth, async (req, res)=>{
