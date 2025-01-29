@@ -3,6 +3,7 @@ const authRouter = express.Router();
 const UserModel = require("../models/user");
 const bcrypt = require("bcrypt");
 const { validateSignUpData } = require("../helper/validation");
+const { run } = require("../utils/sesSendEmail");
 
 // signup API
 authRouter.post("/signup", async (req, res) => {
@@ -21,6 +22,16 @@ authRouter.post("/signup", async (req, res) => {
 
     const savedUser = await user.save();
     const token = await savedUser.getJWT();
+
+    // sending email to user thru ses
+     const emailRes = await run(`Signup Successfull`, `<div>
+              <h2>Welcome to LinkToDev</h2>
+              <p>
+                A platform that LINKS developers worldwide to collaborate,
+                innovate, and grow together.
+              </p>
+          </div>`);
+    
 
     //sending cookie to user
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
@@ -47,6 +58,10 @@ authRouter.post("/login", async (req, res) => {
     if (isPasswordValid) {
       // generating token
       const token = await user.getJWT();
+
+      // sending email to user thru ses
+      const emailRes = await run("Login Successfull", `<h1>Welcome to LinkToDev</h1>`);
+      
 
       //sending cookie to user
       res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
