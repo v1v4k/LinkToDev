@@ -10,6 +10,13 @@ const requestRouter = require("./routes/requestRouter");
 const { userRouter } = require("./routes/userRouter");
 const cors = require("cors");
 
+
+const http = require("http");
+const intializeSocket = require("./utils/socket");
+
+const server = http.createServer(app);
+intializeSocket(server);
+
 require("./utils/cronJob");
 
 app.use(
@@ -27,10 +34,11 @@ app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
 
+
 connectDB()
   .then(() => {
     console.log("Database connection successfully established");
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log("server is up and running at port 4444");
     });
   })
