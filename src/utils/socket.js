@@ -1,9 +1,18 @@
 const socket = require("socket.io");
+const crypto = require("crypto");
+const Chat = require("../models/chat");
+
+const getSecretRoomId = (userId, targetUserId) => {
+  return crypto
+    .createHash("sha256")
+    .update([userId, targetUserId].sort().join("$"))
+    .digest("hex");
+};
 
 const intializeSocket = (server) => {
   const io = socket(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: "http://localhost:5174",
     },
   });
 
@@ -11,19 +20,44 @@ const intializeSocket = (server) => {
   io.on("connection", (socket) => {
     // Listen for a user joining a private chat room
     socket.on("joinChat", ({ firstName, userId, targetUserId }) => {
-      const roomId = [userId, targetUserId].sort().join("$"); // Generate a unique room ID for the two users
-      console.log(`${firstName} joined room : ${roomId}`);
+      const roomId = getSecretRoomId(userId, targetUserId); // Generate a unique room ID for the two users
+      // console.log(`${firstName} joined room : ${roomId}`);
       socket.join(roomId); // Join the specified chat room
     });
 
     // Listen for a message sent by a user
-    socket.on("sendMessage", ({ firstName, userId, targetUserId, text }) => {
-      const roomId = [userId, targetUserId].sort().join("$");
-      console.log(firstName + text);
+    socket.on(
+      "sendMessage",
+      async ({ firstName, userId, targetUserId, text }) => {
+        try {
+          const roomId = getSecretRoomId(userId, targetUserId);
+          // console.log(`${firstName}: ${text}`);
 
-      //emit an event to users in the room
-      io.to(roomId).emit("messageReceived", { firstName, text });
-    });
+          let chat = await Chat.findOne({
+            participants: { $all: [userId, targetUserId] },
+          });
+
+          if (!chat) {
+            chat = new Chat({
+              participants: [userId, targetUserId],
+              messages: [],
+            });
+          }
+
+          chat.messages.push({
+            senderId: userId,
+            text,
+          });
+
+          await chat.save();
+
+          //emit an event to users in the room
+          io.to(roomId).emit("messageReceived", { firstName, text });
+        } catch (err) {
+          console.log(`${err}`);
+        }
+      }
+    );
 
     socket.on("disconnect", () => {});
   });
