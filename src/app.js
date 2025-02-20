@@ -10,9 +10,9 @@ const requestRouter = require("./routes/requestRouter");
 const { userRouter } = require("./routes/userRouter");
 const cors = require("cors");
 
-
 const http = require("http");
 const intializeSocket = require("./utils/socket");
+const chatRouter = require("./routes/chatRouter");
 
 const server = http.createServer(app);
 intializeSocket(server);
@@ -21,7 +21,7 @@ require("./utils/cronJob");
 
 app.use(
   cors({
-    origin: "http://localhost:5174",
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
@@ -33,6 +33,7 @@ app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
+app.use("/", chatRouter)
 
 
 connectDB()

@@ -28,8 +28,6 @@ catch(error){
 }
 
 
-
-
 module.exports = {    
     userAuth
 }

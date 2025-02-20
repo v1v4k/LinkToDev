@@ -12,7 +12,7 @@ const getSecretRoomId = (userId, targetUserId) => {
 const intializeSocket = (server) => {
   const io = socket(server, {
     cors: {
-      origin: "http://localhost:5174",
+      origin: "http://localhost:5173",
     },
   });
 
@@ -31,13 +31,14 @@ const intializeSocket = (server) => {
       async ({ firstName, userId, targetUserId, text }) => {
         try {
           const roomId = getSecretRoomId(userId, targetUserId);
-          // console.log(`${firstName}: ${text}`);
+           //console.log(`${firstName}: ${text}`);
 
+          //saving messages to DB
           let chat = await Chat.findOne({
             participants: { $all: [userId, targetUserId] },
           });
 
-          if (!chat) {
+          if(!chat) {
             chat = new Chat({
               participants: [userId, targetUserId],
               messages: [],
