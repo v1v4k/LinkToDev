@@ -72,6 +72,14 @@ const userSchema = mongoose.Schema({
         type : String,
         default : "It's about you",
         maxLength : 250
+    },
+    isMfaEnable : {
+        type : Boolean,
+    },
+    mfaSecretKey : {
+        type : String,
+        unique : true,
+        required : false
     }
 },
 {
