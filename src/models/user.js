@@ -75,6 +75,7 @@ const userSchema = mongoose.Schema({
     },
     isMfaEnable : {
         type : Boolean,
+        default : false
     },
     mfaSecretKey : {
         type : String,
@@ -88,11 +89,9 @@ const userSchema = mongoose.Schema({
 
 userSchema.methods.getJWT = async function(){
     const user = this;
-
-    const token = await jwt.sign({id: user._id}, "vikram@123", {
+    const token = await jwt.sign({id: user._id, mfaVerified: !user.isMfaEnable}, process.env.JWT_SECRET, {
         expiresIn : '1h'
     })
-
     return token;
 }
 

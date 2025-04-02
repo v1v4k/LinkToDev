@@ -7,11 +7,10 @@ const { run } = require("../utils/sesSendEmail");
 
 // signup API
 authRouter.post("/signup", async (req, res) => {
-  const { password, ...otherData } = req.body;
-
   try {
     // validation of data
     validateSignUpData(req);
+    const { password, ...otherData } = req.body;
 
     // password encryption using bcrypt
 
@@ -20,7 +19,7 @@ authRouter.post("/signup", async (req, res) => {
     // instance of the user model
     const user = new UserModel({ ...otherData, password: passwordHash });
 
-    const savedUser = await user.save();
+    const savedUser = await user.save(); 
     const token = await savedUser.getJWT();
 
     // sending email to user thru ses
@@ -31,11 +30,9 @@ authRouter.post("/signup", async (req, res) => {
                 innovate, and grow together.
               </p>
           </div>`);
-    
 
     //sending cookie to user
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
-
     res.json({ message: "Signed Up Successfully", data: savedUser });
   } catch (err) {
     res.status(400).send(`ERROR : ${err.message}`);
@@ -65,7 +62,10 @@ authRouter.post("/login", async (req, res) => {
 
       //sending cookie to user
       res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
-      res.send(user);
+      res.send({
+        ...user.toObject(),  // Convert user object to plain JS object
+        mfaVerified: !user.isMfaEnable, // If MFA is not enabled, consider it verified
+      });
     } else {
       throw new Error("Invalid Credentials");
     }
