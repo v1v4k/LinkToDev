@@ -23,6 +23,7 @@
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.1",
     "speakeasy": "^2.0.0",
+    "stripe": "^18.2.1",
     "validator": "^13.12.0"
   }
 }
