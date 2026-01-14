@@ -24,7 +24,7 @@ jobs:
           node-version: '20'
 
       - name: Create Artifact
-        run: tar -czf backend.tgz --exclude='node_modules' --exclude='.git' --exclude='.env' .
+        run: tar -czf backend.tgz --exclude='backend.tgz' --exclude='node_modules' --exclude='.git' --exclude='.env' .
 
       - name: Upload to Server
         uses: appleboy/scp-action@v0.1.7
