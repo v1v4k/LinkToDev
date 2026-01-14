@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const connectDB = require("./config/database");
 const app = express();
-const port = 4444;
+const port = process.env.PORT_NO;
 const cookieParser = require("cookie-parser");
 const authRouter = require("./routes/authRouter");
 const profileRouter = require("./routes/profileRouter");
@@ -41,7 +41,7 @@ connectDB()
   .then(() => {
     console.log("Database connection successfully established");
     server.listen(port, () => {
-      console.log("server is up and running at port 4444");
+      console.log(`server is up and running at port ${port}`);
     });
   })
   .catch((err) => {
