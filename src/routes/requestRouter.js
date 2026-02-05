@@ -48,10 +48,10 @@ requestRouter.post(
 
       const data = await ConnectionRequest.save();
 
-      const sendEmail = await run(
-        `New Connection Request`,
-        `<P>${req.user.firstName} sent you connection request</p>`
-      );
+      // const sendEmail = await run(
+      //   `New Connection Request`,
+      //   `<P>${req.user.firstName} sent you connection request</p>`
+      // );
 
       res.json({
         message: `${req.user.firstName} to ${toUser.firstName} : ${status}`,
@@ -94,10 +94,10 @@ requestRouter.post(
       connectionRequest.status = status;
       const data = await connectionRequest.save();
 
-      const sendEmail = await run(
-        `Connection Request Status`,
-        `Your connection request ${status} by ${loggedInUser.firstName}`
-      );
+      // const sendEmail = await run(
+      //   `Connection Request Status`,
+      //   `Your connection request ${status} by ${loggedInUser.firstName}`
+      // );
       res.json({ message: ` connection request ${status}` });
     } catch (error) {
       res.status(400).json({ message: `Error : ${error.message}` });

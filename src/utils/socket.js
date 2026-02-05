@@ -16,8 +16,16 @@ const intializeSocket = (server) => {
     },
   });
 
+  const userSocketMap = {};
+
   // Listen for incoming socket connections
   io.on("connection", (socket) => {
+    const userId = socket.handshake.query.userId;
+
+    if (userId != "undefined") {
+      userSocketMap[userId] = socket.id;
+    }
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
     // Listen for a user joining a private chat room
     socket.on("joinChat", ({ firstName, userId, targetUserId }) => {
       const roomId = getSecretRoomId(userId, targetUserId); // Generate a unique room ID for the two users
@@ -31,14 +39,14 @@ const intializeSocket = (server) => {
       async ({ firstName, userId, targetUserId, text }) => {
         try {
           const roomId = getSecretRoomId(userId, targetUserId);
-           //console.log(`${firstName}: ${text}`);
+          //console.log(`${firstName}: ${text}`);
 
           //saving messages to DB
           let chat = await Chat.findOne({
             participants: { $all: [userId, targetUserId] },
           });
 
-          if(!chat) {
+          if (!chat) {
             chat = new Chat({
               participants: [userId, targetUserId],
               messages: [],
@@ -57,10 +65,15 @@ const intializeSocket = (server) => {
         } catch (err) {
           console.log(`${err}`);
         }
-      }
+      },
     );
 
-    socket.on("disconnect", () => {});
+    socket.on("disconnect", () => {
+      if (userId) {
+        delete userSocketMap[userId];
+      }
+      io.emit("getOnlineUsers", Object.keys(userSocketMap));
+    });
   });
 };
 

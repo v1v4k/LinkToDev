@@ -73,6 +73,23 @@ const userSchema = mongoose.Schema({
         default : "It's about you",
         maxLength : 250
     },
+    stripeCustomerId: {
+        type: String,
+        unique: true,
+        sparse: true 
+    },
+    isPremium: {
+        type: Boolean,
+        default: false
+    },
+    membershipType: {
+        type: String,
+        enum: ["silver", "gold", null],
+        default: null
+    },
+    stripeSubscriptionId: {
+        type: String,
+    },
     isMfaEnable : {
         type : Boolean,
         default : false
