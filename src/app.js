@@ -14,6 +14,8 @@ const cors = require("cors");
 const http = require("http");
 const intializeSocket = require("./utils/socket");
 const chatRouter = require("./routes/chatRouter");
+const paymentRouter = require("./routes/paymentRouter");
+const webhookRouter = require("./routes/webhookRouter");
 
 const server = http.createServer(app);
 intializeSocket(server);
@@ -27,6 +29,12 @@ app.use(
   })
 );
 
+app.use(
+  "/api/webhook", 
+  express.raw({ type: "application/json" }), 
+  webhookRouter
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -36,6 +44,7 @@ app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
 app.use("/", chatRouter);
+app.use("/", paymentRouter)
 
 connectDB()
   .then(() => {
