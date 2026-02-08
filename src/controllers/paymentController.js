@@ -1,20 +1,29 @@
 const Payment = require("../models/payment");
 const { MEMBERSHIP_PLANS } = require("../utils/constants");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const logger = require("../utils/logger");
 
 const createCheckoutSession = async (req, res) => {
   try {
     const { membershipType } = req.body;
     const user = req.user;
 
+    logger.info(
+      `Initiating checkout for user: ${user._id} | Plan: ${membershipType}`,
+    );
+
     const priceId = MEMBERSHIP_PLANS[membershipType];
     if (!priceId) {
+      logger.warn(
+        `Invalid membership attempt by user: ${user._id} | Type: ${membershipType}`,
+      );
       return res.status(400).json({ error: "Invalid membership type" });
     }
 
     const stripePrice = await stripe.prices.retrieve(priceId);
 
     if (!user.stripeCustomerId) {
+      logger.info(`Creating new Stripe customer for user: ${user._id}`);
       const customer = await stripe.customers.create({
         email: user.email,
         name: user.firstName + " " + user.lastName,
@@ -36,6 +45,8 @@ const createCheckoutSession = async (req, res) => {
       },
     });
 
+    logger.info(`Stripe session created: ${session.id} for user: ${user._id}`);
+
     const payment = new Payment({
       userId: user._id,
       stripePaymentId: session.id,
@@ -47,10 +58,11 @@ const createCheckoutSession = async (req, res) => {
     });
 
     await payment.save();
+    logger.info(`Payment record saved to DB: ${payment._id}`);
 
     res.json({ id: session.id, url: session.url });
   } catch (err) {
-    console.error("Error creating session:", err);
+    logger.error("Error creating session:", err);
     res.status(500).json({ error: "Failed to create checkout session" });
   }
 };

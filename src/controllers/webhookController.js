@@ -1,6 +1,7 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const User = require("../models/user");
 const Payment = require("../models/payment");
+const logger = require("../utils/logger");
 const handleWebhook = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
@@ -11,29 +12,45 @@ const handleWebhook = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET,
     );
   } catch (err) {
-    console.error(`Webhook Signature Error: ${err.message}`);
+    logger.error(`Webhook Signature Verification Failed: ${err.message}`);
     return res.status(400).send(`Webhook Signature Verification Failed`);
   }
   try {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
-        const { userId, membershipType } = session.metadata;
+        const { userId, membershipType } = session.metadata || {};
 
-        await Payment.findOneAndUpdate(
+        if (!userId || !membershipType) {
+          logger.error(
+            `Webhook Error: Missing metadata in session ${session.id}`,
+          );
+          break;
+        }
+
+        const payment = await Payment.findOneAndUpdate(
           { stripePaymentId: session.id },
           { status: "succeeded", receiptUrl: session.receipt_url },
         );
 
+        if (!payment) {
+          logger.warn(`Payment record not found for session: ${session.id}`);
+        }
+
         const user = await User.findById(userId);
-        console.log(user)
         if (user) {
           user.isPremium = true;
           user.membershipType = membershipType;
           user.stripeCustomerId = session.customer;
           await user.save();
+          logger.info(
+            `SUCCESS: User ${userId} upgraded to ${membershipType} (Session: ${session.id})`,
+          );
+        } else {
+          logger.error(
+            `Webhook Error: User ${userId} not found during upgrade.`,
+          );
         }
-        console.log(`SUCCESS: User ${userId} upgraded to ${membershipType}`);
         break;
       }
 
@@ -45,6 +62,13 @@ const handleWebhook = async (req, res) => {
           user.isPremium = false;
           user.membershipType = null;
           await user.save();
+          logger.warn(
+            `PAYMENT FAILED: User ${user._id} downgraded due to invoice failure.`,
+          );
+        } else {
+          logger.warn(
+            `Webhook: Received payment_failed for unknown customer ${customerId}`,
+          );
         }
         break;
       }
@@ -58,18 +82,22 @@ const handleWebhook = async (req, res) => {
           user.isPremium = false;
           user.membershipType = null;
           await user.save();
-          console.log(`CANCELLATION: User ${user._id} downgraded.`);
+          logger.info(`SUBSCRIPTION CANCELLED: User ${user._id} downgraded.`);
+        } else {
+          logger.warn(
+            `Webhook: Received subscription_deleted for unknown customer ${customerId}`,
+          );
         }
         break;
       }
       default:
-        // We ignore other events
-        //console.log(`Unhandled event type ${event.type}`);
+      // We ignore other events
+      //logger.info(`Unhandled event type ${event.type}`);
     }
   } catch (err) {
-    console.error("Webhook processing error:", err);
+    logger.error(`Webhook processing logic error: ${err.message}`);
   }
   res.json({ received: true });
 };
 
-module.exports={handleWebhook}
+module.exports = { handleWebhook };

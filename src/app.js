@@ -16,6 +16,7 @@ const intializeSocket = require("./utils/socket");
 const chatRouter = require("./routes/chatRouter");
 const paymentRouter = require("./routes/paymentRouter");
 const webhookRouter = require("./routes/webhookRouter");
+const logger = require("./utils/logger");
 
 const server = http.createServer(app);
 intializeSocket(server);
@@ -28,6 +29,11 @@ app.use(
     credentials: true,
   })
 );
+
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.originalUrl} - IP: ${req.ip}`);
+  next();
+});
 
 app.use(
   "/api/webhook", 
@@ -48,11 +54,11 @@ app.use("/", paymentRouter)
 
 connectDB()
   .then(() => {
-    console.log("Database connection successfully established");
+    logger.info("Database connection successfully established");
     server.listen(port, () => {
-      console.log(`server is up and running at port ${port}`);
+      logger.info(`server is up and running at port ${port}`);
     });
   })
   .catch((err) => {
-    console.error(`Database cannot be connected+${err}`);
+    logger.error(`Database cannot be connected+${err}`);
   });
