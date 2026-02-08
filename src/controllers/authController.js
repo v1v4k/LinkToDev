@@ -38,10 +38,10 @@ const signUp = async (req, res) => {
 
     //sending cookie to user
     res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
-    res.json({ message: "Signed Up Successfully", data: savedUser });
+    res.json({ message: "Signed up successfully", data: savedUser });
   } catch (err) {
-    logger.error(`Signup Failed: ${err.message}`);
-    res.status(400).send(`ERROR : ${err.message}`);
+    logger.error(`Signup failed: ${err.message}`);
+    res.status(400).json({ message: err.message });
   }
 };
 
@@ -53,7 +53,7 @@ const login = async (req, res) => {
 
     if (!user) {
       logger.warn(`Login Failed: Email not found - ${emailId}`);
-      throw new Error("Invalid Credentials");
+      throw new Error("Invalid credentials");
     }
 
     const isPasswordValid = await user.validatePassword(password);
@@ -68,25 +68,28 @@ const login = async (req, res) => {
       //   `<h1>Welcome to LinkToDev</h1>`
       // );
 
-      logger.info(`User Logged In: ${user._id}`);
+      logger.info(`User logged in: ${user._id}`);
 
       //sending cookie to user
       res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
 
-      res.send({
-        ...user.toObject(), // Convert user object to plain JS object
-        mfaVerified: !user.isMfaEnable, // If MFA is not enabled, consider it verified
+      res.status(200).json({
+        message: "Login Successful",
+        data: {
+          ...user.toObject(), // Convert user object to plain JS object
+          mfaVerified: !user.isMfaEnable,
+        }, // If MFA is not enabled, consider it verified
       });
     } else {
       logger.warn(`Login Failed: Invalid password for user ${user._id}`);
-      throw new Error("Invalid Credentials");
+      throw new Error("Invalid credentials");
     }
-  } catch (error) {
-    if (error.message === "Invalid Credentials") {
+  } catch (err) {
+    if (err.message === "Invalid credentials") {
     } else {
-      logger.error(`Login System Error: ${error.message}`);
+      logger.error(`Login system error: ${err.message}`);
     }
-    res.status(400).send(`ERROR : ${error.message}`);
+    res.status(400).json({ message: err.message });
   }
 };
 
@@ -96,7 +99,7 @@ const logout = async (req, res) => {
     expires: new Date(Date.now()),
   });
 
-  res.send("Logout Successful");
+  res.status(200).json({ message: "Logout successful" });
 };
 
 module.exports = { signUp, login, logout };

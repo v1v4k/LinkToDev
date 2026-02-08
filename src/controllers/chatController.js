@@ -1,4 +1,5 @@
 const logger = require("../utils/logger");
+const Chat = require("../models/chat");
 
 const getChatById = async (req, res) => {
   try {
@@ -25,11 +26,10 @@ const getChatById = async (req, res) => {
       logger.info(`Existing chat retrieved: ${chat._id}`);
     }
 
-    res.json(chat);
+    res.json({ message: "Chat retrieved successfully", data: chat });
   } catch (err) {
-    console.log(`${err}`);
     logger.error(`GetChatById Error: ${err.message}`);
-    res.status(400).json({ error: `${err}` });
+    res.status(400).json({ message: err.message });
   }
 };
 

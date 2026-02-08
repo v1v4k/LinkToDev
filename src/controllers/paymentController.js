@@ -17,7 +17,7 @@ const createCheckoutSession = async (req, res) => {
       logger.warn(
         `Invalid membership attempt by user: ${user._id} | Type: ${membershipType}`,
       );
-      return res.status(400).json({ error: "Invalid membership type" });
+      return res.status(400).json({ message: "Invalid membership type" });
     }
 
     const stripePrice = await stripe.prices.retrieve(priceId);
@@ -25,7 +25,7 @@ const createCheckoutSession = async (req, res) => {
     if (!user.stripeCustomerId) {
       logger.info(`Creating new Stripe customer for user: ${user._id}`);
       const customer = await stripe.customers.create({
-        email: user.email,
+        email: user.emailId,
         name: user.firstName + " " + user.lastName,
         metadata: { userId: user._id.toString() },
       });
@@ -60,10 +60,13 @@ const createCheckoutSession = async (req, res) => {
     await payment.save();
     logger.info(`Payment record saved to DB: ${payment._id}`);
 
-    res.json({ id: session.id, url: session.url });
+    res.json({
+      message: "Checkout session created successfully",
+      data: { id: session.id, url: session.url },
+    });
   } catch (err) {
-    logger.error("Error creating session:", err);
-    res.status(500).json({ error: "Failed to create checkout session" });
+    logger.error(`Error creating session: ${err.message}`);
+    res.status(500).json({ message: "Failed to create checkout session" });
   }
 };
 

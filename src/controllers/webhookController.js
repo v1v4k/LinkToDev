@@ -13,7 +13,9 @@ const handleWebhook = async (req, res) => {
     );
   } catch (err) {
     logger.error(`Webhook Signature Verification Failed: ${err.message}`);
-    return res.status(400).send(`Webhook Signature Verification Failed`);
+    return res
+      .status(400)
+      .json({ message: `Webhook Signature Verification Failed` });
   }
   try {
     switch (event.type) {
@@ -96,8 +98,9 @@ const handleWebhook = async (req, res) => {
     }
   } catch (err) {
     logger.error(`Webhook processing logic error: ${err.message}`);
+    return res.status(200).json({ received: true });
   }
-  res.json({ received: true });
+  res.status(200).json({ received: true });
 };
 
 module.exports = { handleWebhook };

@@ -30,11 +30,6 @@ app.use(
   })
 );
 
-app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.originalUrl} - IP: ${req.ip}`);
-  next();
-});
-
 app.use(
   "/api/webhook", 
   express.raw({ type: "application/json" }), 
