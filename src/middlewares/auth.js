@@ -21,22 +21,10 @@ const userAuth = async (req, res, next) => {
       throw new Error("User Not Found");
     }
 
-    if (
-      user.isMfaEnable &&
-      !decodedToken.mfaVerified &&
-      req.path !== "/mfa/setup" &&
-      req.path !== "/mfa/verify"
-    ) {
-      logger.info(
-        `MFA Restriction: User ${id} blocked from ${req.path} pending MFA.`,
-      );
-      return res.status(403).json({ message: "MFA verification required" });
-    }
-
     req.user = user;
     next();
   } catch (error) {
-    logger.error(`Authentication Failed: ${error.message}`);
+    logger.error(`Authentication failed: ${error.message}`);
     res.status(401).json({ Error: error.message });
   }
 };
