@@ -34,13 +34,14 @@ const userSchema = mongoose.Schema({
     },
     emailId : {
         type: String,
-        maxLength: 25,
+        maxLength: 100,
         lowercase : true,
         unique : true,
-        required : true,
+        sparse: true,
+        required : false,
         trim : true,
         validate(value){
-            if(!validator.isEmail(value)){
+            if( value && !validator.isEmail(value)){
                 throw new Error(`Invalid emailId ${value}`)
             }
         }
@@ -49,10 +50,10 @@ const userSchema = mongoose.Schema({
         type : String,
         minLength : 8,
         maxLength : 100,
-        required : true,
+        required : false,
         validate(value){
-            if(!validator.isStrongPassword(value)){
-                throw new Error(`Invalid Password  ${value}`)
+            if(value && !validator.isStrongPassword(value)){
+                throw new Error(`Invalid Password`)
             }
         }
     },
@@ -90,16 +91,7 @@ const userSchema = mongoose.Schema({
     stripeSubscriptionId: {
         type: String,
     },
-    isMfaEnable : {
-        type : Boolean,
-        default : false
     },
-    mfaSecretKey : {
-        type : String,
-        unique : true,
-        required : false
-    }
-},
 {
     timestamps: true
 });

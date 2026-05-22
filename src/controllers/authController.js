@@ -37,10 +37,20 @@ const signUp = async (req, res) => {
     // );
 
     //sending cookie to user
-    res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
+    res.cookie("token", token, {
+      maxAge: 60 * 60 * 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
     res.json({ message: "Signed up successfully", data: savedUser });
   } catch (err) {
     logger.error(`Signup failed: ${err.message}`);
+    if (err.code === 11000) {
+      return res.status(400).json({
+        message: "An account with this email already exists",
+      });
+    }
     res.status(400).json({ message: err.message });
   }
 };
@@ -71,7 +81,12 @@ const login = async (req, res) => {
       logger.info(`User logged in: ${user._id}`);
 
       //sending cookie to user
-      res.cookie("token", token, { maxAge: 60 * 60 * 1000 });
+      res.cookie("token", token, {
+        maxAge: 60 * 60 * 1000,
+        httpOnly: true, 
+        secure: true, 
+        sameSite: "strict",
+      });
 
       res.status(200).json({
         message: "Login Successful",
@@ -102,4 +117,30 @@ const logout = async (req, res) => {
   res.status(200).json({ message: "Logout successful" });
 };
 
-module.exports = { signUp, login, logout };
+const handleGithubCallback = async (req, res) => {
+  try {
+    const user = req.user;
+
+    logger.info("[Controller] OAuth success", {
+      userId: user._id,
+    });
+
+    const token = await user.getJWT();
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      expires: new Date(Date.now() + 8 * 3600000),
+    });
+
+    return res.redirect(`${process.env.FRONTEND_URL}/`);
+  } catch (err) {
+    logger.error("[Controller] OAuth callback error", {
+      error: err.message,
+    });
+
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
+  }
+};
+
+module.exports = { signUp, login, logout, handleGithubCallback };
