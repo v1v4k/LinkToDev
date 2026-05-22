@@ -147,4 +147,20 @@ const getSearch = async (req, res) => {
     });
   }
 };
-module.exports = { getRequests, getConnections, getFeed, getSearch };
+
+const getUserById = async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.params.userId).select(
+      "-password -emailId",
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User fetched successfully", data: user });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+module.exports = { getRequests, getConnections, getFeed, getSearch, getUserById };
