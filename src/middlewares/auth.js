@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const UserModel = require("../models/user");
+const logger = require("../utils/logger");
 
 const userAuth = async (req, res, next) => {
   try {
@@ -16,20 +17,18 @@ const userAuth = async (req, res, next) => {
     const user = await UserModel.findById(id);
 
     if (!user) {
+      logger.warn(`Auth Alert: Token valid but User ID ${id} not found in DB.`);
       throw new Error("User Not Found");
-    }
-
-    if (user.isMfaEnable && !decodedToken.mfaVerified && (req.path !== "/mfa/setup" && req.path !=="/mfa/verify")) {
-      return res.status(403).json({message : "MFA verification required"});
     }
 
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({"Error" : error.message});
+    logger.error(`Authentication failed: ${error.message}`);
+    res.status(401).json({ Error: error.message });
   }
 };
 
 module.exports = {
-  userAuth
+  userAuth,
 };

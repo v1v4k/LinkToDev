@@ -1,0 +1,146 @@
+const UserModel = require("../models/user");
+const { validateSignUpData } = require("../helper/validation");
+const bcrypt = require("bcrypt");
+const logger = require("../utils/logger");
+// const { run } = require("../utils/sesSendEmail");
+
+const signUp = async (req, res) => {
+  try {
+    // validation of data
+    validateSignUpData(req);
+    const { password, ...otherData } = req.body;
+
+    // password encryption using bcrypt
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // instance of the user model
+    const user = new UserModel({ ...otherData, password: passwordHash });
+
+    const savedUser = await user.save();
+    const token = await savedUser.getJWT();
+
+    logger.info(
+      `New User Registered: ${savedUser.emailId} (ID: ${savedUser._id})`,
+    );
+
+    // sending email to user thru ses
+    // const emailRes = await run(
+    //   `Signup Successfull`,
+    //   `<div>
+    //           <h2>Welcome to LinkToDev</h2>
+    //           <p>
+    //             A platform that LINKS developers worldwide to collaborate,
+    //             innovate, and grow together.
+    //           </p>
+    //       </div>`
+    // );
+
+    //sending cookie to user
+    res.cookie("token", token, {
+      maxAge: 60 * 60 * 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+    res.json({ message: "Signed up successfully", data: savedUser });
+  } catch (err) {
+    logger.error(`Signup failed: ${err.message}`);
+    if (err.code === 11000) {
+      return res.status(400).json({
+        message: "An account with this email already exists",
+      });
+    }
+    res.status(400).json({ message: err.message });
+  }
+};
+
+const login = async (req, res) => {
+  const { emailId, password } = req.body;
+
+  try {
+    const user = await UserModel.findOne({ emailId });
+
+    if (!user) {
+      logger.warn(`Login Failed: Email not found - ${emailId}`);
+      throw new Error("Invalid credentials");
+    }
+
+    const isPasswordValid = await user.validatePassword(password);
+
+    if (isPasswordValid) {
+      // generating token
+      const token = await user.getJWT();
+
+      // sending email to user thru ses
+      // const emailRes = await run(
+      //   "Login Successfull",
+      //   `<h1>Welcome to LinkToDev</h1>`
+      // );
+
+      logger.info(`User logged in: ${user._id}`);
+
+      //sending cookie to user
+      res.cookie("token", token, {
+        maxAge: 60 * 60 * 1000,
+        httpOnly: true, 
+        secure: true, 
+        sameSite: "strict",
+      });
+
+      res.status(200).json({
+        message: "Login Successful",
+        data: {
+          ...user.toObject(), // Convert user object to plain JS object
+          mfaVerified: !user.isMfaEnable,
+        }, // If MFA is not enabled, consider it verified
+      });
+    } else {
+      logger.warn(`Login Failed: Invalid password for user ${user._id}`);
+      throw new Error("Invalid credentials");
+    }
+  } catch (err) {
+    if (err.message === "Invalid credentials") {
+    } else {
+      logger.error(`Login system error: ${err.message}`);
+    }
+    res.status(400).json({ message: err.message });
+  }
+};
+
+const logout = async (req, res) => {
+  logger.info("Logout endpoint accessed");
+  res.cookie("token", null, {
+    expires: new Date(Date.now()),
+  });
+
+  res.status(200).json({ message: "Logout successful" });
+};
+
+const handleGithubCallback = async (req, res) => {
+  try {
+    const user = req.user;
+
+    logger.info("[Controller] OAuth success", {
+      userId: user._id,
+    });
+
+    const token = await user.getJWT();
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      expires: new Date(Date.now() + 8 * 3600000),
+    });
+
+    return res.redirect(`${process.env.FRONTEND_URL}/`);
+  } catch (err) {
+    logger.error("[Controller] OAuth callback error", {
+      error: err.message,
+    });
+
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
+  }
+};
+
+module.exports = { signUp, login, logout, handleGithubCallback };
