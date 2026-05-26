@@ -69,7 +69,7 @@ const sendConnectionRequest = async (req, res) => {
     });
   } catch (err) {
     logger.error(`Send Request Error: ${err.message}`);
-    res.status(400).json({message:err.message});
+    res.status(400).json({ message: err.message });
   }
 };
 
@@ -114,4 +114,40 @@ const reviewConnectionRequest = async (req, res) => {
   }
 };
 
-module.exports = { sendConnectionRequest, reviewConnectionRequest };
+// GET /user/connection-status/:userId
+const getConnectionStatus = async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const { userId } = req.params;
+
+    const connection = await ConnectionReqModel.findOne({
+      $or: [
+        { fromUserId: loggedInUser._id, toUserId: userId },
+        { fromUserId: userId, toUserId: loggedInUser._id },
+      ],
+    });
+
+    if (!connection) {
+      return res.json({ data: { status: "none" } });
+    }
+
+    if (connection.status === "interested") {
+      // who sent it?
+      const isSentByMe =
+        connection.fromUserId.toString() === loggedInUser._id.toString();
+      return res.json({
+        data: { status: isSentByMe ? "pending_sent" : "pending_received" },
+      });
+    }
+
+    if (connection.status === "accepted") {
+      return res.json({ data: { status: "connected" } });
+    }
+
+    res.json({ data: { status: "none" } });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+module.exports = { sendConnectionRequest, reviewConnectionRequest, getConnectionStatus };

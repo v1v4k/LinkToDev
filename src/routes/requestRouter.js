@@ -4,6 +4,7 @@ const { userAuth } = require("../middlewares/auth");
 const {
   sendConnectionRequest,
   reviewConnectionRequest,
+  getConnectionStatus,
 } = require("../controllers/requestController");
 
 // sendConnectionRequest API
@@ -21,4 +22,9 @@ requestRouter.post(
   reviewConnectionRequest,
 );
 
+requestRouter.get(
+  "/user/connection-status/:userId",
+  userAuth,
+  getConnectionStatus,
+);
 module.exports = requestRouter;

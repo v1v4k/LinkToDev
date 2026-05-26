@@ -6,6 +6,7 @@ const {
   getFeed,
   getSearch,
   getRequests,
+  getUserById,
 } = require("../controllers/userController");
 const userRouter = express.Router();
 
@@ -20,4 +21,6 @@ userRouter.get("/user/feed", userAuth, getFeed);
 
 // search API
 userRouter.get("/user/search", userAuth, getSearch);
+
+userRouter.get("/user/:userId", userAuth, getUserById);
 module.exports = { userRouter };
