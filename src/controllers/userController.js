@@ -19,13 +19,18 @@ const getRequests = async (req, res) => {
       status: "interested",
     }).populate("fromUserId", SHOW_USER_DATA);
 
+    // Filter out requests where sender was deleted
+    const validRequests = connectionRequests.filter(
+      (req) => req.fromUserId !== null,
+    );
+
     logger.info(
-      `Fetched ${connectionRequests.length} connection requests for user: ${loggedInUser}`,
+      `Fetched ${validRequests.length} valid connection requests for user: ${loggedInUser}`,
     );
 
     res.status(200).json({
-      message: `Data Fetched Successfully`,
-      data: connectionRequests,
+      message: "Data Fetched Successfully",
+      data: validRequests,
     });
   } catch (err) {
     logger.error(`Error fetching requests: ${err.message}`);
@@ -163,4 +168,10 @@ const getUserById = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
-module.exports = { getRequests, getConnections, getFeed, getSearch, getUserById };
+module.exports = {
+  getRequests,
+  getConnections,
+  getFeed,
+  getSearch,
+  getUserById,
+};
