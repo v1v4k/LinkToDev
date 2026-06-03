@@ -1,112 +1,235 @@
-# LinkToDev — Backend API
-The official backend service for **LinkToDev**, a developer networking platform.  
-It handles developer discovery logic, connection management, authentication, and real-time chat via Socket.io.
+# 🚀 LinkToDev — Backend API
+
+Backend API powering **LinkToDev**, a developer networking platform designed to help developers discover, connect, collaborate, and grow together.
 
 ![Backend Deploy](https://github.com/v1v4k/LinkToDev/actions/workflows/deploy.yml/badge.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D18-green) 
-🌍 **Live Application:** https://www.linktodev.com
+![Node](https://img.shields.io/badge/node-22-green)
+![Docker](https://img.shields.io/badge/docker-containerized-blue)
+![MongoDB](https://img.shields.io/badge/database-mongodb-green)
+![AWS](https://img.shields.io/badge/cloud-aws-orange)
 
-## 🛠 Tech Stack
-- **Runtime:** Node.js
-- **Framework:** Express.js
-- **Database:** MongoDB (via Mongoose)
-- **Authentication:** JWT (HTTP-only cookies)
-- **Real-time:** Socket.io
+🌍 **Live:** https://www.linktodev.com
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|:---|:---|
+| 🔐 Authentication | Email/password + GitHub OAuth + JWT (HTTP-only cookies) |
+| 👤 Profiles | Create, edit, skills, bio, photo |
+| 🤝 Connections | Send, accept, reject requests + status tracking |
+| 💬 Real-time Chat | Socket.io one-to-one messaging + online presence |
+| 💳 Payments | Stripe checkout + webhook handling |
+| 🛡️ Security | Helmet, rate limiting, CORS, bcrypt, non-root Docker |
+| 📈 Observability | Winston + Morgan logging, health check endpoint |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|:---|:---|
+| Runtime | Node.js 22 |
+| Framework | Express.js |
+| Database | MongoDB + Mongoose |
+| Authentication | JWT + GitHub OAuth (Passport.js) |
+| Real-Time | Socket.io |
+| Payments | Stripe |
+| Logging | Winston + Morgan |
+| Security | Helmet + express-rate-limit |
+| Containerization | Docker (multi-stage build) |
+| Registry | AWS ECR |
+| Reverse Proxy | Nginx |
+| Cloud | AWS EC2 |
+| CI/CD | GitHub Actions |
+
+---
+
+## 📂 Project Structure
+
+```plaintext
+src/
+├── config/          → database, passport
+├── controllers/     → request handlers
+├── services/        → business logic
+├── models/          → mongoose schemas
+├── routes/          → express routers
+├── middlewares/     → auth, validation
+├── helper/          → utility functions
+├── utils/           → logger, socket, cron
+└── app.js           → entry point
+```
+
+---
 
 ## 🔐 Environment Variables
-Create a `.env` file in the root of the project:
+
 ```env
-MONGO_URL=<your_mongodb_connection_string>
-JWT_SECRET=<your_secure_secret>
-PORT=4444
+# Server
+PORT_NO=4444
+NODE_ENV=production
+FRONTEND_URL=
+
+# Database
+MONGO_URI=
+
+# JWT
+JWT_SECRET=
+
+# GitHub OAuth
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_CALLBACK_URL=
+
+# Stripe
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
 ```
 
-## 🚀 Installation & Running
-### 1. Install Dependencies
+---
+
+## 🚀 Running Locally
+
+### With Docker (recommended)
+
+```bash
+docker build -t linktodev-backend .
+docker run -p 4444:4444 --env-file .env linktodev-backend
+```
+
+### Without Docker
+
 ```bash
 npm install
-```
-### 2. Start the Server
-**Production Mode:**
-```bash
-npm run start
-```
-**Development Mode (Nodemon):**
-```bash
 npm run dev
 ```
 
-## 📡 API Overview
-All endpoints are served from this backend service.  
-**Authentication Strategy:**
-- JWT is issued upon login and stored in a secure **HTTP-only cookie**.
-- Frontend requests must include `withCredentials: true` to pass the cookie.
-- All request/response bodies are JSON unless stated otherwise.
+---
 
-## 🔌 Endpoints
-### 🔐 Auth Router
-| Method | Endpoint | Description |
-|:---:|:---|:---|
-| `POST` | `/signup` | Create a new user account |
-| `POST` | `/login` | Login and receive a JWT cookie |
-| `POST` | `/logout` | Clear the session cookie |
-### 👤 Profile Router
-| Method | Endpoint | Description |
-|:---:|:---|:---|
-| `GET` | `/profile` | Get current logged-in user data |
-| `PATCH` | `/profile/edit` | Update profile details (skills, bio, etc.) |
-| `PATCH` | `/profile/password`| Change account password |
-### 🔗 Request Router
-| Method | Endpoint | Description |
-|:---:|:---|:---|
-| `POST` | `/sendConnectionRequest/:status/:toUserId` | Send request (`interested`) or ignore (`ignored`) |
-| `POST` | `/request/review/:status/:requestId` | Review request (`accepted` or `rejected`) |
-**Status Rules:**
-- `interested`: Sends a connection request.
-- `ignored`: Permanently removes the user from your feed.
-- `accepted`: Approve request and create a connection.
-- `rejected`: Decline the request.
-- *Note: Only the receiver can review a request.*
-### 🧑‍💻 Users & Discovery (`/user`)
-| Method | Endpoint | Description |
-|:---:|:---|:---|
-| `GET` | `/user/feed` | Get potential connections (excludes connected/ignored users) |
-| `GET` | `/user/search` | Search users by first name (`?query=Name`) |
-| `GET` | `/user/connections` | List all accepted connections |
-| `GET` | `/user/requests/received` | List pending incoming requests |
-### 💬 Chat Router
-| Method | Endpoint | Description |
-|:---:|:---|:---|
-| `GET` | `/chat/:targetUserId` | Fetch chat history with a specific connection |
+## 📡 API Reference
 
-## ⚡ Real-time Events (Socket.io)
-The backend runs a Socket.io server alongside Express to handle instant messaging.
-**Events:**
-- `joinChat`: Client emits this to join a specific room (based on userId).
-- `sendMessage`: Client emits a message payload.
-- `messageReceived`: Server broadcasts the message to the recipient instantly.
+### 🔐 Auth
 
-## 🚢 Deployment Architecture
-The backend is hosted on **Google Cloud Platform (GCP)** with isolated environments for Staging and Production.
-### Environments
-- **Staging (`dev`):** An isolated instance for testing new features before release.
-- **Production (`main`):** The live environment serving real user traffic.
-### Server Configuration
-Both environments follow this architecture:
-- **Web Server:** Nginx (Reverse Proxy handling SSL & forwarding traffic).
-- **Process Management:** PM2 ensures the Node.js process stays alive.
-```bash
-# PM2 process list example
-pm2 list
-# │ id │ name                │ status  │ uptime │ memory      │
-# │ 0  │ linktodev-prod      │ online  │ 24h    │ 150mb       │
-# │ 1  │ linktodev-staging   │ online  │ 2h     │ 120mb       │
+| Method | Endpoint | Description |
+|:---:|:---|:---|
+| POST | /signup | Register user |
+| POST | /login | Login — returns JWT cookie |
+| POST | /logout | Clear session |
+| GET | /auth/github | GitHub OAuth |
+| GET | /auth/github/callback | OAuth callback |
+
+### 👤 Profile
+
+| Method | Endpoint | Description |
+|:---:|:---|:---|
+| GET | /profile | Get logged-in user |
+| PATCH | /profile/edit | Update profile |
+| PATCH | /profile/password | Change password |
+
+### 🤝 Connections
+
+| Method | Endpoint | Description |
+|:---:|:---|:---|
+| POST | /sendConnectionRequest/:status/:toUserId | Send/ignore request |
+| POST | /request/review/:status/:requestId | Accept/reject request |
+| GET | /user/connection-status/:userId | Get connection status |
+
+### 👨‍💻 Users
+
+| Method | Endpoint | Description |
+|:---:|:---|:---|
+| GET | /user/feed | Get potential connections |
+| GET | /user/search | Search by name |
+| GET | /user/connections | List connections |
+| GET | /user/requests/received | Pending requests |
+| GET | /user/:userId | Get user by ID |
+
+### 💬 Chat
+
+| Method | Endpoint | Description |
+|:---:|:---|:---|
+| GET | /chat/:targetUserId | Get chat history |
+
+### 💳 Payments
+
+| Method | Endpoint | Description |
+|:---:|:---|:---|
+| POST | /payment/create-checkout-session | Stripe checkout |
+| POST | /api/webhook | Stripe webhook |
+
+### 🏥 Health
+
+| Method | Endpoint | Description |
+|:---:|:---|:---|
+| GET | /health | Server status, uptime, DB state, memory |
+
+---
+
+## 🔌 Socket Events
+
+| Event | Direction | Description |
+|:---|:---|:---|
+| joinChat | Client → Server | Join private chat room |
+| sendMessage | Client → Server | Send message |
+| messageReceived | Server → Client | Receive message |
+| getOnlineUsers | Server → Client | Online users list |
+
+---
+
+## 🛡️ Security
+
+| Layer | Implementation |
+|:---|:---|
+| Headers | Helmet.js — sets secure HTTP headers |
+| Rate Limiting | 100 req/15min (API), 10 req/15min (auth) |
+| Authentication | JWT in HTTP-only cookies |
+| Passwords | bcrypt hashing |
+| CORS | Restricted to `FRONTEND_URL` |
+| Container | Non-root user (`appuser`) |
+
+---
+
+## 📈 Observability
+
+| Tool | Purpose |
+|:---|:---|
+| Morgan | HTTP request logging |
+| Winston | Application event logging |
+| /health | Server status endpoint |
+
+```plaintext
+logs/
+├── error.log
+└── combined.log
 ```
 
-## 🔁 CI/CD Pipeline
-Automated deployments via **GitHub Actions**.
-| Branch | Environment | Strategy |
-|:---:|:---:|:---|
-| `dev` | Staging | **Auto-deploy** to test server |
-| `main` | Production | **Manual Approval** -> Deploy to Prod |
+---
 
+## 🚢 Deployment & CI/CD
+
+Full deployment architecture, CI/CD pipeline, branch strategy, and rollback procedures are documented in the infrastructure repository.
+
+👉 [LinkToDev Infrastructure](https://github.com/v1v4k/linktodev-infra)
+
+---
+
+
+## 📈 Future Improvements
+
+- Google OAuth
+- Redis Caching
+- Swagger / OpenAPI Documentation
+- Unit Tests (Jest) + Integration Tests (Supertest)
+- AWS CloudWatch Monitoring
+- Background Jobs (BullMQ / SQS)
+- Notifications System
+
+---
+
+## 🔗 Related Repositories
+
+| Repo | Description |
+|:---|:---|
+| [LinkToDev Frontend](https://github.com/v1v4k/LinkToDevWeb) | React frontend application |
+| [LinkToDev Infrastructure](https://github.com/v1v4k/linktodev-infra) | Docker, Nginx, CI/CD configs |
