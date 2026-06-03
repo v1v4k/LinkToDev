@@ -34,7 +34,9 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
@@ -50,14 +52,10 @@ jobs:
 
             cd ${{ vars.INFRA_PATH }}
 
-            export IMAGE_TAG=${{ github.sha }}
-            export ECR_REGISTRY=${{ secrets.ECR_REGISTRY }}
-            export ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}
-
             COMPOSE_FILE=${{ github.ref == 'refs/heads/main' && 'docker-compose.prod.yml' || 'docker-compose.dev.yml' }}
 
-            docker compose -f $COMPOSE_FILE pull
-            docker compose -f $COMPOSE_FILE up -d --remove-orphans
+            docker compose -f $COMPOSE_FILE pull backend
+            docker compose -f $COMPOSE_FILE up -d --no-deps backend
 
             docker image prune -f
 
